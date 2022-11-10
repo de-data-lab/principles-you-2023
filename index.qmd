@@ -199,7 +199,7 @@ attribute_averages <-
   config(displayModeBar = FALSE)
 ```
 
-# How *We* Prefer to [Think]{style="color: #16958E;"}
+# How *We* Prefer to [Think]{style="color: #16958E;"} {background-color="#16958E33"}
 
 ## [Creative]{style="color: #16958E;"}
 
@@ -448,7 +448,7 @@ People with high scores use and tend to prioritize productivity and utility abov
 
 :::
 
-# How *We* [Engage]{style="color: #83479F;"} with Others
+# How *We* [Engage]{style="color: #83479F;"} with Others {background-color="#83479F33"}
 
 ## [Extraverted]{style="color: #83479F;"}
 
@@ -714,7 +714,7 @@ People with high scores use and appreciate humor, and are quick to laugh and mak
 
 :::
 
-# How *We* [Apply]{style="color: #B2881E;"} Ourselves
+# How *We* [Apply]{style="color: #B2881E;"} Ourselves  {background-color="#B2881E33"}
 
 ## [Composed]{style="color: #B2881E;"}
 
