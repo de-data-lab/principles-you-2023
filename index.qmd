@@ -582,7 +582,7 @@ create_attribute_scale("Nurturing")
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
 ##### Helpful
 
