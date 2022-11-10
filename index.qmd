@@ -1,6 +1,10 @@
 ---
 title: "PrinciplesYou"
-format: revealjs
+format: 
+  revealjs:
+    smaller: true
+    scrollable: true
+    slide-level: 2
 ---
 
 ```{r, include = F}
@@ -13,6 +17,13 @@ library(grid)
 library(viridis)
 
 theme_set(theme_minimal())
+
+TI_blue <- "#0056C0"
+TI_orange <- "#FF8400"
+TI_green <- "#58BF01"
+TI_grey <- "#C0C5CA"
+
+source("functions.R")
 ```
 
 ```{r, include = F}
@@ -29,25 +40,29 @@ archipeligo <- readPNG(here::here("img", "PrinciplesYou - Archipeligo.png"))
 ## Archetypes
 
 ```{r}
-archetypes %>% 
+{
+  archetypes %>% 
   count(Archetype, sort = T) %>% 
   mutate(Archetype = fct_reorder(Archetype, n)) %>% 
   ggplot(aes(x = n,
-             y = Archetype,
-             fill = "1")) +
-  geom_col() +
+             y = Archetype)) +
+  geom_col(fill = TI_blue) +
   scale_x_continuous(breaks = seq(0, 6, 1)) +
-  scale_fill_viridis_d() +
   theme(panel.grid.minor.x = element_blank(),
         panel.grid.major.y = element_blank(),
         axis.title = element_blank(),
         legend.position = "none")
+} %>% 
+  ggplotly()%>%
+  config(displayModeBar = FALSE)
+
 ```
 
 ## ...by Matchiness
 
 ```{r}
-archetypes %>% 
+{
+  archetypes %>% 
   count(Archetype, Match, sort = T) %>% 
   group_by(Archetype) %>% 
   mutate(total_n = sum(n)) %>% 
@@ -59,11 +74,17 @@ archetypes %>%
              fill = Match)) +
   geom_col(position = "stack") +
   scale_x_continuous(breaks = seq(0, 6, 1)) +
-  scale_fill_viridis_d() +
-  theme(legend.position = c(0.88, 0.2),
-        panel.grid.minor.x = element_blank(),
+  scale_fill_manual(values = c(scales::alpha(TI_blue, 0.25),
+                               scales::alpha(TI_blue, 0.50),
+                               scales::alpha(TI_blue, 0.75),
+                               TI_blue)) +
+  theme(panel.grid.minor.x = element_blank(),
         panel.grid.major.y = element_blank(),
         axis.title = element_blank())
+  } %>% 
+  ggplotly() %>% 
+  layout(legend = list(x = 0.7, y = 0.2)) %>%
+  config(displayModeBar = FALSE)
 ```
 
 ## Archipeligos
@@ -81,12 +102,33 @@ archetypes %>%
                                width = unit(1, "npc"),
                                height = unit(1, "npc")),
                     0, 931, 0, 551) +
-  geom_point(color = "blue") +
+  geom_point(color = TI_blue) +
   coord_cartesian(xlim = c(0, 931),
                   ylim = c(0, 551),
                   clip = "off") +
   theme_void() +
   theme(legend.position = "none")
+```
+
+## Archipeligos
+
+```{r}
+{
+  archetypes %>% 
+    left_join(locations, by = "Archetype") %>% 
+    count(Category, sort = T) %>% 
+    mutate(Archipeligo = fct_reorder(Category, n)) %>% 
+    ggplot(aes(x = n,
+               y = Archipeligo)) +
+    geom_col(fill = TI_blue) +
+    scale_x_continuous(breaks = seq(0, 8, 1)) +
+    theme(panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_blank(),
+          axis.title = element_blank(),
+          legend.position = "none")
+} %>% 
+  ggplotly() %>%
+  config(displayModeBar = FALSE)
 ```
 
 ## Attributes
@@ -112,45 +154,54 @@ attribute_averages <-
 
 
 ```{r}
-attributes %>% 
-  pivot_longer(c(-First, -Last, -Team)) %>% 
-  mutate(Section = str_extract(name, "^.+\\s-\\s"),
-         Section = str_remove(Section, "\\s-\\s"),
-         Subsection = str_remove(name, "^.+\\s-\\s")) %>% 
-  select(First, Last, Team, Section, Subsection, value) %>% 
-  group_by(Section, Subsection) %>% 
-  mutate(subsection_avg = mean(value)) %>% 
-  ungroup() %>% 
-  mutate(Subsection = fct_reorder(Subsection, subsection_avg),
-         type = "individual") %>% 
-  union(attribute_averages) %>% 
-  filter(Section %in% c("Think", "Engage", "Apply")) %>% 
-  ggplot(aes(x = value,
-             y = Subsection,
-             color = type,
-             alpha = type,
-             size = type,
-             shape = type)) +
-  geom_point() +
-  scale_alpha_manual(values = c(1.0, 0.5)) +
-  scale_color_manual(values = c("blue", "gray")) +
-  scale_shape_manual(values = c(15, 16)) + # square, circle
-  scale_size_manual(values = c(3, 2)) +
-  scale_x_continuous(labels = scales::percent,
-                     breaks = seq(0, 1, 0.2)) +
-  facet_grid(Section ~ ., 
-             scales = "free_y") +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.title = element_blank(),
-        legend.position = "top",
-        legend.title = element_blank(),
-        strip.text = element_text(color = "blue", face = "bold"),
-        panel.spacing = unit(1, "cm"))
+{
+  attributes %>% 
+    pivot_longer(c(-First, -Last, -Team)) %>% 
+    mutate(Section = str_extract(name, "^.+\\s-\\s"),
+           Section = str_remove(Section, "\\s-\\s"),
+           Subsection = str_remove(name, "^.+\\s-\\s")) %>% 
+    select(First, Last, Team, Section, Subsection, value) %>% 
+    group_by(Section, Subsection) %>% 
+    mutate(subsection_avg = mean(value)) %>% 
+    ungroup() %>% 
+    mutate(Subsection = fct_reorder(Subsection, subsection_avg),
+           type = "individual") %>% 
+    union(attribute_averages) %>% 
+    filter(Section %in% c("Think", "Engage", "Apply")) %>% 
+    mutate(tooltip_text = if_else(type == "individual",
+                                  true = glue::glue("This {type} scored {scales::percent(value)} for \"{Subsection}\"."),                                             ,
+                                  false = glue::glue("The {type} score was {scales::percent(value)} for \"{Subsection}\"."))) %>% 
+    ggplot(aes(x = value,
+               y = Subsection,
+               color = type,
+               alpha = type,
+               size = type,
+               shape = type,
+               text = tooltip_text)) +
+    geom_point() +
+    scale_alpha_manual(values = c(1.0, 0.5)) +
+    scale_color_manual(values = c(TI_blue, TI_grey)) +
+    scale_shape_manual(values = c(15, 16)) + # square, circle
+    scale_size_manual(values = c(3, 2)) +
+    scale_x_continuous(labels = scales::percent,
+                       breaks = seq(0, 1, 0.2)) +
+    facet_grid(Section ~ ., 
+               scales = "free_y") +
+    theme(panel.grid.minor.x = element_blank(),
+          axis.title = element_blank(),
+          legend.position = "none",
+          legend.title = element_blank(),
+          strip.text = element_text(color = TI_blue, face = "bold"),
+          panel.spacing = unit(1, "cm"))
+  
+} %>% 
+  ggplotly(tooltip = "text") %>%
+  config(displayModeBar = FALSE)
 ```
 
-## How *We* Prefer to Think
+# How *We* Prefer to [Think]{style="color: #16958E;"}
 
-## Creative
+## [Creative]{style="color: #16958E;"}
 
 ::: {.panel-tabset}
 
@@ -162,82 +213,33 @@ attributes %>%
 
 #### Overall
 
-```{r}
-attributes %>% 
-  pivot_longer(c(-First, -Last, -Team)) %>% 
-  mutate(Section = str_extract(name, "^.+\\s-\\s"),
-         Section = str_remove(Section, "\\s-\\s"),
-         Subsection = str_remove(name, "^.+\\s-\\s")) %>% 
-  select(First, Last, Team, Section, Subsection, value) %>% 
-  group_by(Section, Subsection) %>% 
-  mutate(subsection_avg = mean(value)) %>% 
-  ungroup() %>% 
-  mutate(Subsection = fct_reorder(Subsection, subsection_avg),
-         type = "individual") %>% 
-  union(attribute_averages) %>% 
-  filter(Subsection %in% c("Creative")) %>% 
-  ggplot(aes(x = value,
-             y = Subsection,
-             color = type,
-             alpha = type,
-             size = type,
-             shape = type)) +
-  geom_point() +
-  scale_alpha_manual(values = c(1.0, 0.5)) +
-  scale_color_manual(values = c("blue", "gray")) +
-  scale_shape_manual(values = c(15, 16)) + # square, circle
-  scale_size_manual(values = c(6, 4)) +
-  scale_x_continuous(labels = scales::percent,
-                     breaks = seq(0, 1, 0.2)) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.title = element_blank(),
-        axis.text.y = element_blank(),
-        legend.position = "top",
-        legend.title = element_blank(),
-        strip.text = element_text(color = "blue", face = "bold"),
-        panel.spacing = unit(1, "cm"))
+```{r, out.width = "100%"}
+create_attribute_scale("Creative")
 ```
+
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Original
 
 ```{r}
-attributes %>% 
-  pivot_longer(c(-First, -Last, -Team)) %>% 
-  mutate(Section = str_extract(name, "^.+\\s-\\s"),
-         Section = str_remove(Section, "\\s-\\s"),
-         Subsection = str_remove(name, "^.+\\s-\\s")) %>% 
-  select(First, Last, Team, Section, Subsection, value) %>% 
-  group_by(Section, Subsection) %>% 
-  mutate(subsection_avg = mean(value)) %>% 
-  ungroup() %>% 
-  mutate(Subsection = fct_reorder(Subsection, subsection_avg),
-         type = "individual") %>% 
-  union(attribute_averages) %>% 
-  filter(Section %in% c("Creative")) %>% 
-  ggplot(aes(x = value,
-             y = Subsection,
-             color = type,
-             alpha = type,
-             size = type,
-             shape = type)) +
-  geom_point() +
-  scale_alpha_manual(values = c(1.0, 0.5)) +
-  scale_color_manual(values = c("blue", "gray")) +
-  scale_shape_manual(values = c(15, 16)) + # square, circle
-  scale_size_manual(values = c(6, 4)) +
-  scale_x_continuous(labels = scales::percent,
-                     breaks = seq(0, 1, 0.2)) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.title = element_blank(),
-        # axis.text.y = element_blank(),
-        legend.position = "top",
-        legend.title = element_blank(),
-        strip.text = element_text(color = "blue", face = "bold"),
-        panel.spacing = unit(1, "cm"))
+create_attribute_scale("Original")
+```
+
+##### Curious
+
+```{r}
+create_attribute_scale("Curious")
+```
+
+##### Non-Conforming
+
+```{r}
+create_attribute_scale("Non-Conforming")
 ```
 
 
@@ -247,7 +249,7 @@ attributes %>%
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Creative measures how people like to think and innovate, as well as the kind of environment they prefer. It is comprised of three facets: Originality, Curiosity, and Nonconformity.**
 
@@ -258,7 +260,7 @@ People with high scores have a deep passion for learning and coming up with nove
 :::
 
 
-## Deliberative
+## [Deliberative]{style="color: #16958E;"}
 
 ::: {.panel-tabset}
 
@@ -271,26 +273,36 @@ People with high scores have a deep passion for learning and coming up with nove
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Deliberative")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
+##### Systematic
 ```{r}
-
+create_attribute_scale("Systematic")
 ```
 
+##### Logical
+```{r}
+create_attribute_scale("Logical")
+```
+
+##### Impartial
+```{r}
+create_attribute_scale("Impartial")
+```
 :::
 
 ::::
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Deliberative describes how people process information to make decisions, solve problems, or complete tasks. It characterizes those who tend to work through decisions more systematically, preferring logic and analysis over intuition. It is comprised of three facets: Logical, Systematic, and Impartial.**
 
@@ -300,7 +312,7 @@ People with high scores rely on linear thinking, objectivity, and logic, and the
 
 :::
 
-## Detailed and Reliable
+## [Detailed and Reliable]{style="color: #16958E;"}
 
 ::: {.panel-tabset}
 
@@ -313,17 +325,31 @@ People with high scores rely on linear thinking, objectivity, and logic, and the
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Detailed and Reliable")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Detail-Oriented
 
 ```{r}
+create_attribute_scale("Detail-Oriented")
+```
 
+##### Dependable
+
+```{r}
+create_attribute_scale("Dependable")
+```
+
+##### Organized
+
+```{r}
+create_attribute_scale("Organized")
 ```
 
 :::
@@ -332,7 +358,7 @@ People with high scores rely on linear thinking, objectivity, and logic, and the
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Detailed and Reliable measures the way people organize their thinking to control, regulate, and direct their impulses toward the achievement of goals and objectives. It is comprised of three facets: Organized, Detail-Oriented and Dependable.**
 
@@ -342,7 +368,7 @@ People with high scores prefer to focus on details, be neat and organized, follo
 
 :::
 
-## Conceptual
+## [Conceptual]{style="color: #16958E;"}
 
 ::: {.panel-tabset}
 
@@ -355,18 +381,16 @@ People with high scores prefer to focus on details, be neat and organized, follo
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Conceptual")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
-```{r}
-
-```
+There are no facets for "Conceptual".
 
 :::
 
@@ -374,7 +398,7 @@ People with high scores prefer to focus on details, be neat and organized, follo
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Conceptual describes a preference for thinking abstractly and philosophically by identifying and understanding the deeper patterns and connections behind phenomena.**
 
@@ -384,7 +408,7 @@ People with high scores prefer to think in terms of abstractions, theories, and 
 
 :::
 
-## Practical
+## [Practical]{style="color: #16958E;"}
 
 ::: {.panel-tabset}
 
@@ -397,18 +421,16 @@ People with high scores prefer to think in terms of abstractions, theories, and 
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Practical")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
-```{r}
-
-```
+There are no facets for "Practical".
 
 :::
 
@@ -416,7 +438,7 @@ People with high scores prefer to think in terms of abstractions, theories, and 
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Practical describes the preference to approach work with a focus on pragmatic considerations, constraints, and realities of a given decision or question.**
 
@@ -426,9 +448,9 @@ People with high scores use and tend to prioritize productivity and utility abov
 
 :::
 
-## How *We* Engage with Others
+# How *We* [Engage]{style="color: #83479F;"} with Others
 
-## Extraverted
+## [Extraverted]{style="color: #83479F;"}
 
 ::: {.panel-tabset}
 
@@ -441,17 +463,31 @@ People with high scores use and tend to prioritize productivity and utility abov
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Extraverted")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Adventurous
 
 ```{r}
+create_attribute_scale("Adventurous")
+```
 
+##### Engaging
+
+```{r}
+create_attribute_scale("Engaging")
+```
+
+##### Gregarious
+
+```{r}
+create_attribute_scale("Gregarious")
 ```
 
 :::
@@ -460,7 +496,7 @@ People with high scores use and tend to prioritize productivity and utility abov
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Extraverted describes how people prefer to engage with the world of people, opportunities, and experiences around them. It is comprised of three facets: Gregarious, Engaging, and Adventurous.**
 
@@ -470,7 +506,7 @@ People with high scores have a preference for engaging and talking with people, 
 
 :::
 
-## Tough
+## [Tough]{style="color: #83479F;"}
 
 ::: {.panel-tabset}
 
@@ -483,17 +519,31 @@ People with high scores have a preference for engaging and talking with people, 
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Tough")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Feisty
 
 ```{r}
+create_attribute_scale("Feisty")
+```
 
+##### Critical
+
+```{r}
+create_attribute_scale("Critical")
+```
+
+##### Direct
+
+```{r}
+create_attribute_scale("Direct")
 ```
 
 :::
@@ -502,7 +552,7 @@ People with high scores have a preference for engaging and talking with people, 
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Tough measures one's willingness to be direct, straightforward, and critical. It is comprised of three facets: Feisty, Critical, and Direct.**
 
@@ -512,7 +562,7 @@ People with high scores fight for their ideas, tell people what they really thin
 
 :::
 
-## Nurturing
+## [Nurturing]{style="color: #83479F;"}
 
 ::: {.panel-tabset}
 
@@ -525,7 +575,7 @@ People with high scores fight for their ideas, tell people what they really thin
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Nurturing")
 ```
 
 :::
@@ -534,8 +584,22 @@ People with high scores fight for their ideas, tell people what they really thin
 
 #### Sub-attributes
 
-```{r}
+##### Helpful
 
+```{r}
+create_attribute_scale("Helpful")
+```
+
+##### Person-Oriented
+
+```{r}
+create_attribute_scale("Person-Oriented")
+```
+
+##### Empathetic
+
+```{r}
+create_attribute_scale("Empathetic")
 ```
 
 :::
@@ -544,7 +608,7 @@ People with high scores fight for their ideas, tell people what they really thin
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Nurturing measures one's focus on others' needs and feelings. It is comprised of three facets: Helpful, Empathetic, and People-Oriented.**
 
@@ -554,7 +618,7 @@ People with high scores have a preference for expressing warmth and supportivene
 
 :::
 
-## Leadership
+## [Leadership]{style="color: #83479F;"}
 
 ::: {.panel-tabset}
 
@@ -567,17 +631,31 @@ People with high scores have a preference for expressing warmth and supportivene
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Leadership")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Taking Charge
 
 ```{r}
+create_attribute_scale("Taking Charge")
+```
 
+##### Inspiring
+
+```{r}
+create_attribute_scale("Inspiring")
+```
+
+##### Demanding
+
+```{r}
+create_attribute_scale("Demanding")
 ```
 
 :::
@@ -586,7 +664,7 @@ People with high scores have a preference for expressing warmth and supportivene
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Leadership measures how people engage others in a group, a team, or in the achievement of a shared goal. It is comprised of three facets: Demanding, Taking Charge, and Inspiring.**
 
@@ -596,7 +674,7 @@ People with high scores tend to be demanding, ready to take charge, and inspire 
 
 :::
 
-## Humorous
+## [Humorous]{style="color: #83479F;"}
 
 ::: {.panel-tabset}
 
@@ -609,18 +687,16 @@ People with high scores tend to be demanding, ready to take charge, and inspire 
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Humorous")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
-```{r}
-
-```
+There are no facets for "Humorous".
 
 :::
 
@@ -628,7 +704,7 @@ People with high scores tend to be demanding, ready to take charge, and inspire 
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Humorous describes the tendency to approach life with a sense of lightheartedness and joy.**
 
@@ -638,9 +714,9 @@ People with high scores use and appreciate humor, and are quick to laugh and mak
 
 :::
 
-## How *We* Apply Ourselves
+# How *We* [Apply]{style="color: #B2881E;"} Ourselves
 
-## Composed
+## [Composed]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -653,17 +729,31 @@ People with high scores use and appreciate humor, and are quick to laugh and mak
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Composed")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Calm
 
 ```{r}
+create_attribute_scale("Calm")
+```
 
+##### Poised
+
+```{r}
+create_attribute_scale("Poised")
+```
+
+##### Confident
+
+```{r}
+create_attribute_scale("Confident")
 ```
 
 :::
@@ -672,7 +762,7 @@ People with high scores use and appreciate humor, and are quick to laugh and mak
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Composed describes how well people hold themselves together in the face of challenge and stress. It is comprised of three facets: Even-Keeled/Calm, Confident, and Poised.**
 
@@ -682,7 +772,7 @@ People with high scores tend to remain calm, confident, and controlled under pre
 
 :::
 
-## Autonomous
+## [Autonomous]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -695,17 +785,31 @@ People with high scores tend to remain calm, confident, and controlled under pre
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Autonomous")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Internally Motivated
 
 ```{r}
+create_attribute_scale("Internally Motivated")
+```
 
+##### Self-Accountable
+
+```{r}
+create_attribute_scale("Self-Accountable")
+```
+
+##### Independent
+
+```{r}
+create_attribute_scale("Independent")
 ```
 
 :::
@@ -714,7 +818,7 @@ People with high scores tend to remain calm, confident, and controlled under pre
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Autonomous measures the preference to take actions or make decisions in a self-directed way. It is comprised of three facets: Independent, Self-Accountable, and Internally-Motivated.**
 
@@ -724,7 +828,7 @@ People with high scores tend to prefer to achieve goals independently, take care
 
 :::
 
-## Flexible
+## [Flexible]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -737,17 +841,31 @@ People with high scores tend to prefer to achieve goals independently, take care
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Flexible")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Growth-Seeking
 
 ```{r}
+create_attribute_scale("Growth-Seeking")
+```
 
+##### Agile
+
+```{r}
+create_attribute_scale("Agile")
+```
+
+##### Adaptable
+
+```{r}
+create_attribute_scale("Adaptable")
 ```
 
 :::
@@ -756,7 +874,7 @@ People with high scores tend to prefer to achieve goals independently, take care
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Flexible describes how people think and respond to change by adjusting to it and being adaptable. It is comprised of three facets: Adaptable, Agile, and Growth-Seeking.**
 
@@ -766,7 +884,7 @@ People with high scores tend to prefer change and think it's important to progre
 
 :::
 
-## Determined
+## [Determined]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -779,17 +897,31 @@ People with high scores tend to prefer change and think it's important to progre
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Determined")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Driven
 
 ```{r}
+create_attribute_scale("Driven")
+```
 
+##### Proactive
+
+```{r}
+create_attribute_scale("Proactive")
+```
+
+##### Persistent
+
+```{r}
+create_attribute_scale("Persistent")
 ```
 
 :::
@@ -798,7 +930,7 @@ People with high scores tend to prefer change and think it's important to progre
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Determined refers to how people focus their personal energies, attention, and conviction in pursuit of their objectives. It is comprised of three facets: Persistent, Driven, and Proactive.**
 
@@ -808,7 +940,7 @@ People with high scores are strongly motivated to pursue their goals regardless 
 
 :::
 
-## Humble
+## [Humble]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -821,17 +953,31 @@ People with high scores are strongly motivated to pursue their goals regardless 
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Humble")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
+
+##### Receptive to Criticism
 
 ```{r}
+create_attribute_scale("Receptive to Criticism")
+```
 
+##### Open-Minded
+
+```{r}
+create_attribute_scale("Open-Minded")
+```
+
+##### Modest
+
+```{r}
+create_attribute_scale("Modest")
 ```
 
 :::
@@ -840,7 +986,7 @@ People with high scores are strongly motivated to pursue their goals regardless 
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Humble describes one's openness to understanding what they don't know and what to do about it. It is comprised of three facets: Receptive to Criticism, Open-Minded, and Modest.**
 
@@ -850,7 +996,7 @@ People with high scores are patient, not easily frustrated by their own or other
 
 :::
 
-## Energetic
+## [Energetic]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -863,17 +1009,51 @@ People with high scores are patient, not easily frustrated by their own or other
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Energetic")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
-```{r}
+There are no facets for "Energetic".
 
+```{r, include = F}
+attributes %>% 
+  pivot_longer(c(-First, -Last, -Team)) %>% 
+  mutate(Section = str_extract(name, "^.+\\s-\\s"),
+         Section = str_remove(Section, "\\s-\\s"),
+         Subsection = str_remove(name, "^.+\\s-\\s")) %>% 
+  select(First, Last, Team, Section, Subsection, value) %>% 
+  group_by(Section, Subsection) %>% 
+  mutate(subsection_avg = mean(value)) %>% 
+  ungroup() %>% 
+  mutate(Subsection = fct_reorder(Subsection, subsection_avg),
+         type = "individual") %>% 
+  union(attribute_averages) %>% 
+  filter(Section %in% c("Energetic")) %>% 
+  ggplot(aes(x = value,
+             y = Subsection,
+             color = type,
+             alpha = type,
+             size = type,
+             shape = type)) +
+  geom_point() +
+  scale_alpha_manual(values = c(1.0, 0.5)) +
+  scale_color_manual(values = c(TI_blue, "gray")) +
+  scale_shape_manual(values = c(15, 16)) + # square, circle
+  scale_size_manual(values = c(6, 4)) +
+  scale_x_continuous(labels = scales::percent,
+                     breaks = seq(0, 1, 0.2)) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.title = element_blank(),
+        # axis.text.y = element_blank(),
+        legend.position = "top",
+        legend.title = element_blank(),
+        strip.text = element_text(color = TI_blue, face = "bold"),
+        panel.spacing = unit(1, "cm"))
 ```
 
 :::
@@ -882,7 +1062,7 @@ People with high scores are patient, not easily frustrated by their own or other
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Energy describes the degree of stamina and engagement with which people approach everyday work and life.**
 
@@ -892,7 +1072,7 @@ People with high scores tend to be active and “on the go” all the time, they
 
 :::
 
-## Status-Seeking
+## [Status-Seeking]{style="color: #B2881E;"}
 
 ::: {.panel-tabset}
 
@@ -905,18 +1085,16 @@ People with high scores tend to be active and “on the go” all the time, they
 #### Overall
 
 ```{r}
-
+create_attribute_scale("Status-Seeking")
 ```
 
 :::
 
 ::: {.column width="50%"}
 
-#### Sub-attributes
+#### Facets
 
-```{r}
-
-```
+There are no facets for "Status-Seeking".
 
 :::
 
@@ -924,7 +1102,7 @@ People with high scores tend to be active and “on the go” all the time, they
 
 ### Description
 
-::: {style="font-size: 0.5em"}
+::: {style="font-size: 1em"}
 
 **Status-Seeking describes those who value being liked, being admired, or pleasing others as a measure of success.**
 
